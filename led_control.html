@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED 控制器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        button {
+            font-size: 18px;
+            padding: 12px 24px;
+            margin: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #0f3460;
+            color: white;
+        }
+        button:active { background: #e94560; }
+        #status { margin: 15px; font-size: 16px; color: #f0a500; }
+        .section { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>LED 控制器</h1>
+    
+    <div class="section">
+        <button onclick="connect()">🔗 连接设备</button>
+        <p id="status">未连接</p>
+    </div>
+
+    <div class="section">
+        <button onclick="sendCmd('开机')">开机</button>
+        <button onclick="sendCmd('关机')">关机</button>
+    </div>
+
+    <div class="section">
+        <button onclick="sendCmd('开灯')">开灯</button>
+        <button onclick="sendCmd('关灯')">关灯</button>
+    </div>
+
+    <div class="section">
+        <button onclick="sendCmd('亮度25')">25%</button>
+        <button onclick="sendCmd('亮度50')">50%</button>
+        <button onclick="sendCmd('亮度75')">75%</button>
+        <button onclick="sendCmd('亮度100')">100%</button>
+    </div>
+
+    <div class="section">
+        <button onclick="sendCmd('呼吸灯')">呼吸灯</button>
+        <button onclick="sendCmd('流水1')">流水1</button>
+        <button onclick="sendCmd('流水2')">流水2</button>
+        <button onclick="sendCmd('流水3')">流水3</button>
+    </div>
+
+    <script>
+        // 要和 ESP32 代码里的 UUID 一致
+        const SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
+        const CHAR_UUID    = 'abcd1234-1234-1234-1234-123456789abc';
+
+        let device, characteristic;
+
+        // 连接设备
+        async function connect() {
+            try {
+                document.getElementById('status').innerText = '正在搜索...';
+                
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [SERVICE_UUID] }]
+                });
+                
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                characteristic = await service.getCharacteristic(CHAR_UUID);
+                
+                document.getElementById('status').innerText = '✅ 已连接';
+                console.log('连接成功');
+                
+                // 监听断开事件
+                device.addEventListener('gattserverdisconnected', () => {
+                    document.getElementById('status').innerText = '❌ 已断开';
+                });
+                
+            } catch (error) {
+                document.getElementById('status').innerText = '连接失败';
+                console.log('错误:', error);
+            }
+        }
+
+        // 发送指令
+        async function sendCmd(cmd) {
+            if (!characteristic) {
+                alert('请先连接设备');
+                return;
+            }
+            try {
+                const encoder = new TextEncoder();
+                await characteristic.writeValue(encoder.encode(cmd));
+                document.getElementById('status').innerText = '✅ 已发送: ' + cmd;
+                console.log('发送:', cmd);
+            } catch (error) {
+                console.log('发送失败:', error);
+            }
+        }
+    </script>
+</body>
+</html>
