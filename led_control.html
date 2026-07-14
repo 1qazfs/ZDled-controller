@@ -3,111 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LED 控制器</title>
+    <title>泳池LED控制器</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background: #1a1a2e;
-            color: #eee;
+            background: #0a1628;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 10px;
         }
-        button {
-            font-size: 18px;
-            padding: 12px 24px;
-            margin: 8px;
+        .container { max-width: 500px; margin: 0 auto; }
+        h2 { text-align: center; padding: 10px 0; color: #4fc3f7; font-size: 1.2em; }
+
+        /* 连接区域 */
+        .connect-area {
+            text-align: center;
+            padding: 10px;
+            background: #0d2137;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .connect-area button {
+            padding: 10px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .btn-connect { background: #4fc3f7; color: #000; }
+        .btn-disconnect { background: #e57373; color: #fff; }
+
+        /* 状态栏 */
+        .status-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #0d2137;
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+        .status-item { text-align: center; min-width: 50px; }
+        .status-val { color: #4fc3f7; font-size: 16px; font-weight: bold; }
+        .status-label { color: #888; font-size: 10px; }
+
+        /* 预警 */
+        .alert-box {
+            background: #3e2723;
+            border: 1px solid #e57373;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: none;
+            color: #ffab91;
+            font-size: 13px;
+        }
+        .alert-box.show { display: block; }
+
+        /* 按钮区 */
+        .section {
+            background: #0d2137;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .section h3 {
+            font-size: 14px;
+            color: #4fc3f7;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #1a3a5c;
+            padding-bottom: 5px;
+        }
+        .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .btn-row button {
+            flex: 1;
+            min-width: 60px;
+            padding: 10px 5px;
+            font-size: 13px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            background: #0f3460;
-            color: white;
+            background: #1a3a5c;
+            color: #e0e0e0;
+            transition: 0.2s;
         }
-        button:active { background: #e94560; }
-        #status { margin: 15px; font-size: 16px; color: #f0a500; }
-        .section { margin: 20px 0; }
+        .btn-row button:active { background: #4fc3f7; color: #000; }
+        .btn-row button.active { background: #4fc3f7; color: #000; }
+
+        /* 顺序设置 */
+        .order-area {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .order-area input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #1a3a5c;
+            border-radius: 8px;
+            background: #0a1628;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .order-area button {
+            padding: 8px 15px;
+            background: #4fc3f7;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* 泳池建议 */
+        .swim-tip {
+            text-align: center;
+            padding: 8px;
+            background: #1a3a5c;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .swim-good { color: #81c784; }
+        .swim-bad { color: #e57373; }
+
+        /* 模式显示 */
+        .mode-display {
+            text-align: center;
+            font-size: 18px;
+            color: #4fc3f7;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>LED 控制器</h1>
-    
-    <div class="section">
-        <button onclick="connect()">🔗 连接设备</button>
-        <p id="status">未连接</p>
+<div class="container">
+    <h2>🏊 泳池LED控制</h2>
+
+    <!-- 连接 -->
+    <div class="connect-area">
+        <button class="btn-connect" onclick="connectBLE()">🔗 连接设备</button>
+        <button class="btn-disconnect" onclick="disconnectBLE()" style="display:none" id="btnDisconn">断开</button>
+        <p id="connStatus" style="margin-top:5px;font-size:12px;color:#888;">未连接</p>
     </div>
 
-    <div class="section">
-        <button onclick="sendCmd('开机')">开机</button>
-        <button onclick="sendCmd('关机')">关机</button>
+    <!-- 预警 -->
+    <div class="alert-box" id="alertBox"></div>
+
+    <!-- 数据面板 -->
+    <div class="status-bar" id="dataPanel">
+        <div class="status-item"><div class="status-val" id="valTemp">--</div><div class="status-label">气温℃</div></div>
+        <div class="status-item"><div class="status-val" id="valHum">--</div><div class="status-label">湿度%</div></div>
+        <div class="status-item"><div class="status-val" id="valPress">--</div><div class="status-label">气压hPa</div></div>
+        <div class="status-item"><div class="status-val" id="valTDS">--</div><div class="status-label">TDS/ppm</div></div>
+        <div class="status-item"><div class="status-val" id="valWT">--</div><div class="status-label">水温℃</div></div>
+        <div class="status-item"><div class="status-val" id="valWL">--</div><div class="status-label">水位</div></div>
     </div>
 
+    <!-- 泳池建议 -->
+    <div class="swim-tip" id="swimTip">--</div>
+
+    <!-- 当前模式 -->
+    <div class="mode-display" id="modeDisplay">当前模式: --</div>
+
+    <!-- 电源 -->
     <div class="section">
-        <button onclick="sendCmd('开灯')">开灯</button>
-        <button onclick="sendCmd('关灯')">关灯</button>
+        <h3>🔌 电源</h3>
+        <div class="btn-row">
+            <button onclick="sendCmd('开机')">开机</button>
+            <button onclick="sendCmd('关机')">关机</button>
+        </div>
     </div>
 
+    <!-- 灯光 -->
     <div class="section">
-        <button onclick="sendCmd('亮度25')">25%</button>
-        <button onclick="sendCmd('亮度50')">50%</button>
-        <button onclick="sendCmd('亮度75')">75%</button>
-        <button onclick="sendCmd('亮度100')">100%</button>
+        <h3>💡 灯光</h3>
+        <div class="btn-row">
+            <button onclick="sendCmd('开灯')">开灯</button>
+            <button onclick="sendCmd('关灯')">关灯</button>
+        </div>
     </div>
 
+    <!-- 亮度 -->
     <div class="section">
-        <button onclick="sendCmd('呼吸灯')">呼吸灯</button>
-        <button onclick="sendCmd('流水1')">流水1</button>
-        <button onclick="sendCmd('流水2')">流水2</button>
-        <button onclick="sendCmd('流水3')">流水3</button>
+        <h3>🔆 亮度</h3>
+        <div class="btn-row">
+            <button onclick="sendCmd('亮度25')">25%</button>
+            <button onclick="sendCmd('亮度50')">50%</button>
+            <button onclick="sendCmd('亮度75')">75%</button>
+            <button onclick="sendCmd('亮度100')">100%</button>
+        </div>
     </div>
 
-    <script>
-        // 要和 ESP32 代码里的 UUID 一致
-        const SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
-        const CHAR_UUID    = 'abcd1234-1234-1234-1234-123456789abc';
+    <!-- 模式 -->
+    <div class="section">
+        <h3>🎨 模式</h3>
+        <div class="btn-row">
+            <button onclick="sendCmd('呼吸灯')">呼吸灯</button>
+            <button id="btnFlow1" onclick="sendCmd('流水1')">流水1</button>
+            <button id="btnFlow2" onclick="sendCmd('流水2')">流水2</button>
+        </div>
+    </div>
 
-        let device, characteristic;
+    <!-- 流水灯顺序设置 -->
+    <div class="section">
+        <h3>🔢 流水灯顺序</h3>
+        <div class="order-area">
+            <input type="text" id="orderInput" placeholder="例: 1,3,2,5,4">
+            <button onclick="setOrder()">保存</button>
+        </div>
+        <p style="font-size:10px;color:#888;margin-top:5px;">不设置默认按地址顺序执行</p>
+    </div>
+</div>
 
-        // 连接设备
-        async function connect() {
-            try {
-                document.getElementById('status').innerText = '正在搜索...';
-                
-                device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [SERVICE_UUID] }]
-                });
-                
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService(SERVICE_UUID);
-                characteristic = await service.getCharacteristic(CHAR_UUID);
-                
-                document.getElementById('status').innerText = '✅ 已连接';
-                console.log('连接成功');
-                
-                // 监听断开事件
-                device.addEventListener('gattserverdisconnected', () => {
-                    document.getElementById('status').innerText = '❌ 已断开';
-                });
-                
-            } catch (error) {
-                document.getElementById('status').innerText = '连接失败';
-                console.log('错误:', error);
-            }
+<script>
+    let bleDevice, bleServer, bleChar;
+    let connected = false;
+
+    const SERVICE_UUID = "12345678-1234-1234-1234-123456789abc";
+    const CHAR_UUID    = "abcd1234-1234-1234-1234-123456789abc";
+
+    // ==================== 连接 ====================
+    async function connectBLE() {
+        try {
+            document.getElementById('connStatus').innerText = '搜索中...';
+            bleDevice = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [SERVICE_UUID] }]
+            });
+            bleServer = await bleDevice.gatt.connect();
+            let service = await bleServer.getPrimaryService(SERVICE_UUID);
+            bleChar = await service.getCharacteristic(CHAR_UUID);
+
+            // 监听 notify
+            await bleChar.startNotifications();
+            bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
+
+            connected = true;
+            document.getElementById('connStatus').innerText = '✅ 已连接';
+            document.getElementById('btnDisconn').style.display = 'inline-block';
+
+            bleDevice.addEventListener('gattserverdisconnected', onDisconnect);
+        } catch(e) {
+            document.getElementById('connStatus').innerText = '连接失败';
+            console.log(e);
+        }
+    }
+
+    function disconnectBLE() {
+        if(bleServer) bleServer.disconnect();
+    }
+
+    function onDisconnect() {
+        connected = false;
+        document.getElementById('connStatus').innerText = '❌ 已断开';
+        document.getElementById('btnDisconn').style.display = 'none';
+    }
+
+    // ==================== 发送指令 ====================
+    async function sendCmd(cmd) {
+        if(!connected || !bleChar) return;
+        try {
+            let encoder = new TextEncoder();
+            await bleChar.writeValue(encoder.encode(cmd));
+        } catch(e) { console.log(e); }
+    }
+
+    // ==================== 设置流水灯顺序 ====================
+    function setOrder() {
+        let val = document.getElementById('orderInput').value.trim();
+        if(val) sendCmd('顺序:' + val);
+    }
+
+    // ==================== 接收数据 ====================
+    function onDataReceived(event) {
+        try {
+            let json = JSON.parse(new TextDecoder().decode(event.target.value));
+            updateUI(json);
+        } catch(e) {}
+    }
+
+    function updateUI(data) {
+        // 数据面板
+        document.getElementById('valTemp').innerText  = data.t  ?? '--';
+        document.getElementById('valHum').innerText   = data.h  ?? '--';
+        document.getElementById('valPress').innerText = data.p  ?? '--';
+        document.getElementById('valTDS').innerText   = data.tds ?? '--';
+        document.getElementById('valWT').innerText    = data.wt ?? '--';
+
+        // 水位
+        let wlMap = {'High':'高','Normal':'正常','Low':'低'};
+        document.getElementById('valWL').innerText = wlMap[data.wl] ?? '--';
+
+        // 模式
+        document.getElementById('modeDisplay').innerText = '当前模式: ' + (data.mode || '--');
+
+        // 游泳建议
+        let tip = document.getElementById('swimTip');
+        if(data.swim == 'good') {
+            tip.innerHTML = '<span class="swim-good">✅ 适合游泳</span>';
+        } else if(data.swim == 'bad') {
+            tip.innerHTML = '<span class="swim-bad">❌ 不适合游泳</span>';
+        } else {
+            tip.innerText = '--';
         }
 
-        // 发送指令
-        async function sendCmd(cmd) {
-            if (!characteristic) {
-                alert('请先连接设备');
-                return;
-            }
-            try {
-                const encoder = new TextEncoder();
-                await characteristic.writeValue(encoder.encode(cmd));
-                document.getElementById('status').innerText = '✅ 已发送: ' + cmd;
-                console.log('发送:', cmd);
-            } catch (error) {
-                console.log('发送失败:', error);
-            }
+        // 预警
+        let alertBox = document.getElementById('alertBox');
+        if(data.alert) {
+            alertBox.innerText = '⚠️ ' + data.alert;
+            alertBox.classList.add('show');
+        } else {
+            alertBox.classList.remove('show');
         }
-    </script>
+    }
+</script>
 </body>
 </html>
