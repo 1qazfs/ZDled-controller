@@ -16,125 +16,77 @@
         .container { max-width: 500px; margin: 0 auto; }
         h2 { text-align: center; padding: 10px 0; color: #4fc3f7; font-size: 1.2em; }
 
-        /* 连接区域 */
         .connect-area {
-            text-align: center;
-            padding: 10px;
-            background: #0d2137;
-            border-radius: 10px;
-            margin-bottom: 10px;
+            text-align: center; padding: 10px;
+            background: #0d2137; border-radius: 10px; margin-bottom: 10px;
         }
         .connect-area button {
-            padding: 10px 30px;
-            font-size: 16px;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
+            padding: 10px 30px; font-size: 16px;
+            border: none; border-radius: 20px; cursor: pointer;
         }
         .btn-connect { background: #4fc3f7; color: #000; }
-        .btn-disconnect { background: #e57373; color: #fff; }
+        .btn-disconnect { background: #e57373; color: #fff; display: none; }
 
-        /* 状态栏 */
         .status-bar {
-            display: flex;
-            justify-content: space-around;
-            background: #0d2137;
-            border-radius: 10px;
-            padding: 8px;
-            margin-bottom: 10px;
-            font-size: 12px;
-            flex-wrap: wrap;
+            display: flex; justify-content: space-around;
+            background: #0d2137; border-radius: 10px;
+            padding: 8px; margin-bottom: 10px;
+            font-size: 12px; flex-wrap: wrap;
         }
         .status-item { text-align: center; min-width: 50px; }
         .status-val { color: #4fc3f7; font-size: 16px; font-weight: bold; }
         .status-label { color: #888; font-size: 10px; }
 
-        /* 预警 */
         .alert-box {
-            background: #3e2723;
-            border: 1px solid #e57373;
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 10px;
-            display: none;
-            color: #ffab91;
-            font-size: 13px;
+            background: #3e2723; border: 1px solid #e57373;
+            border-radius: 10px; padding: 10px; margin-bottom: 10px;
+            display: none; color: #ffab91; font-size: 13px;
         }
         .alert-box.show { display: block; }
 
-        /* 按钮区 */
         .section {
-            background: #0d2137;
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 10px;
+            background: #0d2137; border-radius: 10px;
+            padding: 10px; margin-bottom: 10px;
         }
         .section h3 {
-            font-size: 14px;
-            color: #4fc3f7;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #1a3a5c;
+            font-size: 14px; color: #4fc3f7;
+            margin-bottom: 8px; border-bottom: 1px solid #1a3a5c;
             padding-bottom: 5px;
         }
-        .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
         .btn-row button {
-            flex: 1;
-            min-width: 60px;
-            padding: 10px 5px;
-            font-size: 13px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #1a3a5c;
-            color: #e0e0e0;
+            flex: 1; min-width: 55px; padding: 8px 4px;
+            font-size: 12px; border: none; border-radius: 8px;
+            cursor: pointer; background: #1a3a5c; color: #e0e0e0;
             transition: 0.2s;
         }
         .btn-row button:active { background: #4fc3f7; color: #000; }
-        .btn-row button.active { background: #4fc3f7; color: #000; }
 
-        /* 顺序设置 */
         .order-area {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
+            display: flex; gap: 8px; margin-top: 8px;
         }
         .order-area input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #1a3a5c;
-            border-radius: 8px;
-            background: #0a1628;
-            color: #e0e0e0;
-            font-size: 14px;
+            flex: 1; padding: 8px; border: 1px solid #1a3a5c;
+            border-radius: 8px; background: #0a1628;
+            color: #e0e0e0; font-size: 14px;
         }
         .order-area button {
-            padding: 8px 15px;
-            background: #4fc3f7;
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
+            padding: 8px 15px; background: #4fc3f7;
+            color: #000; border: none; border-radius: 8px;
+            font-size: 13px; cursor: pointer;
         }
 
-        /* 泳池建议 */
         .swim-tip {
-            text-align: center;
-            padding: 8px;
-            background: #1a3a5c;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            font-size: 14px;
+            text-align: center; padding: 8px;
+            background: #1a3a5c; border-radius: 10px;
+            margin-bottom: 10px; font-size: 14px;
         }
         .swim-good { color: #81c784; }
         .swim-bad { color: #e57373; }
 
-        /* 模式显示 */
         .mode-display {
-            text-align: center;
-            font-size: 18px;
-            color: #4fc3f7;
-            padding: 5px;
+            text-align: center; font-size: 16px;
+            color: #4fc3f7; padding: 5px;
         }
     </style>
 </head>
@@ -145,7 +97,7 @@
     <!-- 连接 -->
     <div class="connect-area">
         <button class="btn-connect" onclick="connectBLE()">🔗 连接设备</button>
-        <button class="btn-disconnect" onclick="disconnectBLE()" style="display:none" id="btnDisconn">断开</button>
+        <button class="btn-disconnect" id="btnDisconn" onclick="disconnectBLE()">断开</button>
         <p id="connStatus" style="margin-top:5px;font-size:12px;color:#888;">未连接</p>
     </div>
 
@@ -202,19 +154,28 @@
         <h3>🎨 模式</h3>
         <div class="btn-row">
             <button onclick="sendCmd('呼吸灯')">呼吸灯</button>
-            <button id="btnFlow1" onclick="sendCmd('流水1')">流水1</button>
-            <button id="btnFlow2" onclick="sendCmd('流水2')">流水2</button>
+            <button onclick="sendCmd('流水1')">流水1</button>
+            <button onclick="sendCmd('流水2')">流水2</button>
         </div>
     </div>
 
-    <!-- 流水灯顺序设置 -->
+    <!-- 流水灯顺序 -->
     <div class="section">
         <h3>🔢 流水灯顺序</h3>
         <div class="order-area">
             <input type="text" id="orderInput" placeholder="例: 1,3,2,5,4">
             <button onclick="setOrder()">保存</button>
         </div>
-        <p style="font-size:10px;color:#888;margin-top:5px;">不设置默认按地址顺序执行</p>
+        <p style="font-size:10px;color:#888;margin-top:5px;">不设置默认按地址顺序</p>
+    </div>
+
+    <!-- 校准 -->
+    <div class="section">
+        <h3>🔧 校准</h3>
+        <div class="btn-row">
+            <button onclick="sendCmd('校准EC')">EC校准</button>
+        </div>
+        <p style="font-size:10px;color:#888;margin-top:5px;">探头放入25°纯净水中再点校准</p>
     </div>
 </div>
 
@@ -225,7 +186,6 @@
     const SERVICE_UUID = "12345678-1234-1234-1234-123456789abc";
     const CHAR_UUID    = "abcd1234-1234-1234-1234-123456789abc";
 
-    // ==================== 连接 ====================
     async function connectBLE() {
         try {
             document.getElementById('connStatus').innerText = '搜索中...';
@@ -236,18 +196,15 @@
             let service = await bleServer.getPrimaryService(SERVICE_UUID);
             bleChar = await service.getCharacteristic(CHAR_UUID);
 
-            // 监听 notify
             await bleChar.startNotifications();
             bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
 
             connected = true;
             document.getElementById('connStatus').innerText = '✅ 已连接';
             document.getElementById('btnDisconn').style.display = 'inline-block';
-
             bleDevice.addEventListener('gattserverdisconnected', onDisconnect);
         } catch(e) {
             document.getElementById('connStatus').innerText = '连接失败';
-            console.log(e);
         }
     }
 
@@ -261,22 +218,18 @@
         document.getElementById('btnDisconn').style.display = 'none';
     }
 
-    // ==================== 发送指令 ====================
     async function sendCmd(cmd) {
         if(!connected || !bleChar) return;
         try {
-            let encoder = new TextEncoder();
-            await bleChar.writeValue(encoder.encode(cmd));
-        } catch(e) { console.log(e); }
+            await bleChar.writeValue(new TextEncoder().encode(cmd));
+        } catch(e) {}
     }
 
-    // ==================== 设置流水灯顺序 ====================
     function setOrder() {
         let val = document.getElementById('orderInput').value.trim();
         if(val) sendCmd('顺序:' + val);
     }
 
-    // ==================== 接收数据 ====================
     function onDataReceived(event) {
         try {
             let json = JSON.parse(new TextDecoder().decode(event.target.value));
@@ -285,21 +238,17 @@
     }
 
     function updateUI(data) {
-        // 数据面板
         document.getElementById('valTemp').innerText  = data.t  ?? '--';
         document.getElementById('valHum').innerText   = data.h  ?? '--';
         document.getElementById('valPress').innerText = data.p  ?? '--';
         document.getElementById('valTDS').innerText   = data.tds ?? '--';
         document.getElementById('valWT').innerText    = data.wt ?? '--';
 
-        // 水位
         let wlMap = {'High':'高','Normal':'正常','Low':'低'};
         document.getElementById('valWL').innerText = wlMap[data.wl] ?? '--';
 
-        // 模式
         document.getElementById('modeDisplay').innerText = '当前模式: ' + (data.mode || '--');
 
-        // 游泳建议
         let tip = document.getElementById('swimTip');
         if(data.swim == 'good') {
             tip.innerHTML = '<span class="swim-good">✅ 适合游泳</span>';
@@ -309,7 +258,6 @@
             tip.innerText = '--';
         }
 
-        // 预警
         let alertBox = document.getElementById('alertBox');
         if(data.alert) {
             alertBox.innerText = '⚠️ ' + data.alert;
