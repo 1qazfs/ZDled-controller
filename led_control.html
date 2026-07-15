@@ -2,8 +2,15 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>泳池LED控制器</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="泳池控制">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -175,7 +182,7 @@
         <div class="btn-row">
             <button onclick="sendCmd('校准EC')">EC校准</button>
         </div>
-        <p style="font-size:10px;color:#888;margin-top:5px;">探头放入25°纯净水中再点校准</p>
+        <p style="font-size:10px;color:#888;margin-top:5px;">探头放入纯净水中再点校准</p>
     </div>
 </div>
 
