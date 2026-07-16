@@ -133,8 +133,7 @@
     <div class="section">
         <h3>💡 灯光</h3>
         <div class="btn-row">
-            <button onclick="sendCmd('开灯')">开灯</button>
-            <button onclick="sendCmd('关灯')">关灯</button>
+            <button onclick="sendCmd('常亮')">常亮</button>
         </div>
     </div>
 
@@ -154,6 +153,7 @@
             <button onclick="sendCmd('呼吸灯')">呼吸灯</button>
             <button onclick="sendCmd('流水1')">流水1</button>
             <button onclick="sendCmd('流水2')">流水2</button>
+            <button onclick="sendCmd('流水3')">流水3</button>
         </div>
     </div>
 
@@ -162,6 +162,9 @@
         <div class="order-area">
             <input type="text" id="orderInput" placeholder="例: 1,3,2,5,4">
             <button onclick="setOrder()">保存</button>
+        </div>
+        <div class="btn-row" style="margin-top:6px;">
+            <button onclick="sendCmd('恢复默认')">恢复默认</button>
         </div>
         <p style="font-size:10px;color:#888;margin-top:5px;">不设置默认按地址顺序</p>
     </div>
@@ -254,7 +257,7 @@
 
     function setOrder() {
         let val = document.getElementById('orderInput').value.trim();
-        if(val) sendCmd('顺序:' + val);
+        if(val) sendCmd('序:' + val);
     }
 
     function onDataReceived(event) {
