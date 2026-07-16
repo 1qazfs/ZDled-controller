@@ -188,7 +188,6 @@
     window.addEventListener('beforeinstallprompt', function(e) {
         e.preventDefault();
         deferredPrompt = e;
-        // 延迟1秒弹出询问
         setTimeout(function() {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then(function(result) {
@@ -212,19 +211,27 @@
             bleDevice = await navigator.bluetooth.requestDevice({
                 filters: [{ services: [SERVICE_UUID] }]
             });
+            document.getElementById('connStatus').innerText = '已找到设备';
+
             bleServer = await bleDevice.gatt.connect();
+            document.getElementById('connStatus').innerText = '已连接GATT';
+
             let service = await bleServer.getPrimaryService(SERVICE_UUID);
+            document.getElementById('connStatus').innerText = '已获取服务';
+
             bleChar = await service.getCharacteristic(CHAR_UUID);
+            document.getElementById('connStatus').innerText = '已获取特征';
 
             await bleChar.startNotifications();
+            document.getElementById('connStatus').innerText = '✅ 已连接';
+
             bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
 
             connected = true;
-            document.getElementById('connStatus').innerText = '✅ 已连接';
             document.getElementById('btnDisconn').style.display = 'inline-block';
             bleDevice.addEventListener('gattserverdisconnected', onDisconnect);
         } catch(e) {
-            document.getElementById('connStatus').innerText = '连接失败';
+            document.getElementById('connStatus').innerText = '失败: ' + e.message;
         }
     }
 
