@@ -4,298 +4,344 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>泳池LED控制器</title>
-
-    <!-- PWA -->
     <link rel="manifest" href="/ZDled-controller/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="泳池控制">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a1628">
-
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
-            background: #0a1628;
-            color: #e0e0e0;
-            min-height: 100vh;
-            padding: 10px;
-        }
-        .container { max-width: 500px; margin: 0 auto; }
-        h2 { text-align: center; padding: 10px 0; color: #4fc3f7; font-size: 1.2em; }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;background:#0a1628;color:#e0e0e0;min-height:100vh;padding:10px}
+        .container{max-width:500px;margin:0 auto}
+        h2{text-align:center;padding:10px 0;color:#4fc3f7;font-size:1.2em}
 
-        .connect-area {
-            text-align: center; padding: 10px;
-            background: #0d2137; border-radius: 10px; margin-bottom: 10px;
-        }
-        .connect-area button {
-            padding: 10px 30px; font-size: 16px;
-            border: none; border-radius: 20px; cursor: pointer;
-        }
-        .btn-connect { background: #4fc3f7; color: #000; }
-        .btn-disconnect { background: #e57373; color: #fff; display: none; }
+        .tab-bar{display:flex;gap:10px;margin-bottom:15px}
+        .tab-bar button{flex:1;padding:12px;font-size:16px;border:none;border-radius:10px;cursor:pointer;background:#1a3a5c;color:#e0e0e0}
+        .tab-bar button.active{background:#4fc3f7;color:#000}
 
-        .status-bar {
-            display: flex; justify-content: space-around;
-            background: #0d2137; border-radius: 10px;
-            padding: 8px; margin-bottom: 10px;
-            font-size: 12px; flex-wrap: wrap;
-        }
-        .status-item { text-align: center; min-width: 50px; }
-        .status-val { color: #4fc3f7; font-size: 16px; font-weight: bold; }
-        .status-label { color: #888; font-size: 10px; }
+        .connect-area{text-align:center;padding:10px;background:#0d2137;border-radius:10px;margin-bottom:10px}
+        .connect-area button{padding:10px 30px;font-size:16px;border:none;border-radius:20px;cursor:pointer}
+        .btn-connect{background:#4fc3f7;color:#000}
+        .btn-disconnect{background:#e57373;color:#fff;display:none}
 
-        .alert-box {
-            background: #3e2723; border: 1px solid #e57373;
-            border-radius: 10px; padding: 10px; margin-bottom: 10px;
-            display: none; color: #ffab91; font-size: 13px;
-        }
-        .alert-box.show { display: block; }
+        .status-bar{display:flex;justify-content:space-around;background:#0d2137;border-radius:10px;padding:8px;margin-bottom:10px;font-size:12px;flex-wrap:wrap}
+        .status-item{text-align:center;min-width:45px;margin:2px}
+        .status-val{color:#4fc3f7;font-size:15px;font-weight:bold}
+        .status-label{color:#888;font-size:10px}
 
-        .section {
-            background: #0d2137; border-radius: 10px;
-            padding: 10px; margin-bottom: 10px;
-        }
-        .section h3 {
-            font-size: 14px; color: #4fc3f7;
-            margin-bottom: 8px; border-bottom: 1px solid #1a3a5c;
-            padding-bottom: 5px;
-        }
-        .btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
-        .btn-row button {
-            flex: 1; min-width: 55px; padding: 8px 4px;
-            font-size: 12px; border: none; border-radius: 8px;
-            cursor: pointer; background: #1a3a5c; color: #e0e0e0;
-            transition: 0.2s;
-        }
-        .btn-row button:active { background: #4fc3f7; color: #000; }
+        .alert-box{background:#3e2723;border:1px solid #e57373;border-radius:10px;padding:10px;margin-bottom:10px;display:none;color:#ffab91;font-size:13px}
+        .alert-box.show{display:block}
 
-        .order-area {
-            display: flex; gap: 8px; margin-top: 8px;
-        }
-        .order-area input {
-            flex: 1; padding: 8px; border: 1px solid #1a3a5c;
-            border-radius: 8px; background: #0a1628;
-            color: #e0e0e0; font-size: 14px;
-        }
-        .order-area button {
-            padding: 8px 15px; background: #4fc3f7;
-            color: #000; border: none; border-radius: 8px;
-            font-size: 13px; cursor: pointer;
-        }
+        .section{background:#0d2137;border-radius:10px;padding:10px;margin-bottom:10px}
+        .section h3{font-size:14px;color:#4fc3f7;margin-bottom:8px;border-bottom:1px solid #1a3a5c;padding-bottom:5px}
+        .btn-row{display:flex;flex-wrap:wrap;gap:6px}
+        .btn-row button{flex:1;min-width:55px;padding:8px 4px;font-size:12px;border:none;border-radius:8px;cursor:pointer;background:#1a3a5c;color:#e0e0e0}
+        .btn-row button:active{background:#4fc3f7;color:#000}
 
-        .swim-tip {
-            text-align: center; padding: 8px;
-            background: #1a3a5c; border-radius: 10px;
-            margin-bottom: 10px; font-size: 14px;
-        }
-        .swim-good { color: #81c784; }
-        .swim-bad { color: #e57373; }
+        .order-area{display:flex;gap:8px;margin-top:8px}
+        .order-area input{flex:1;padding:8px;border:1px solid #1a3a5c;border-radius:8px;background:#0a1628;color:#e0e0e0;font-size:14px}
+        .order-area button{padding:8px 15px;background:#4fc3f7;color:#000;border:none;border-radius:8px;font-size:13px;cursor:pointer}
 
-        .mode-display {
-            text-align: center; font-size: 16px;
-            color: #4fc3f7; padding: 5px;
-        }
+        .swim-tip{text-align:center;padding:8px;background:#1a3a5c;border-radius:10px;margin-bottom:10px;font-size:14px}
+        .swim-good{color:#81c784}.swim-bad{color:#e57373}
+        .mode-display{text-align:center;font-size:16px;color:#4fc3f7;padding:5px}
+
+        .cal-card{background:#1a3a5c;border-radius:10px;padding:12px;margin-bottom:8px}
+        .cal-card h4{color:#4fc3f7;margin-bottom:5px}
+        .cal-card p{font-size:12px;color:#aaa;margin-bottom:6px}
+        .cal-card .cal-info{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+        .cal-card .cal-time{font-size:11px;color:#888}
+        .cal-card .cal-due{font-size:11px;padding:2px 8px;border-radius:4px}
+        .cal-due.ok{background:#1b5e20;color:#81c784}
+        .cal-due.warn{background:#e65100;color:#ffcc02}
+        .cal-due.over{background:#b71c1c;color:#ffab91}
+        .cal-card button{padding:6px 14px;font-size:12px;border:none;border-radius:6px;cursor:pointer;background:#4fc3f7;color:#000;margin-right:4px;margin-bottom:4px}
+        .cal-card .btn-history{background:#555;color:#ccc}
+
+        .history-list{max-height:200px;overflow-y:auto;margin-top:8px;display:none}
+        .history-list.show{display:block}
+        .history-item{font-size:11px;color:#aaa;padding:4px 0;border-bottom:1px solid #1a3a5c}
+
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:100;justify-content:center;align-items:center}
+        .modal.show{display:flex}
+        .modal-content{background:#0d2137;border-radius:15px;padding:20px;max-width:350px;width:90%;text-align:center}
+        .modal-content h3{color:#4fc3f7;margin-bottom:15px}
+        .modal-content p{font-size:14px;color:#ccc;margin-bottom:15px;line-height:1.6;white-space:pre-line}
+        .modal-content button{padding:10px 30px;font-size:14px;border:none;border-radius:10px;cursor:pointer;background:#4fc3f7;color:#000;margin:5px}
+        .modal-content .btn-cancel{background:#555;color:#fff}
+        .spinner{width:40px;height:40px;border:4px solid #1a3a5c;border-top-color:#4fc3f7;border-radius:50%;animation:spin 1s linear infinite;margin:10px auto}
+        @keyframes spin{to{transform:rotate(360deg)}}
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>🏊 泳池LED控制</h2>
+    <h2>🏊 泳池控制</h2>
 
     <div class="connect-area">
         <button class="btn-connect" onclick="connectBLE()">🔗 连接设备</button>
         <button class="btn-disconnect" id="btnDisconn" onclick="disconnectBLE()">断开</button>
-        <p id="connStatus" style="margin-top:5px;font-size:12px;color:#888;">未连接</p>
+        <p id="connStatus" style="margin-top:5px;font-size:12px;color:#888">未连接</p>
     </div>
 
-    <div class="alert-box" id="alertBox"></div>
-
-    <div class="status-bar" id="dataPanel">
-        <div class="status-item"><div class="status-val" id="valTemp">--</div><div class="status-label">气温℃</div></div>
-        <div class="status-item"><div class="status-val" id="valHum">--</div><div class="status-label">湿度%</div></div>
-        <div class="status-item"><div class="status-val" id="valPress">--</div><div class="status-label">气压hPa</div></div>
-        <div class="status-item"><div class="status-val" id="valTDS">--</div><div class="status-label">TDS/ppm</div></div>
-        <div class="status-item"><div class="status-val" id="valWT">--</div><div class="status-label">水温℃</div></div>
-        <div class="status-item"><div class="status-val" id="valWL">--</div><div class="status-label">水位</div></div>
+    <div class="tab-bar">
+        <button class="active" onclick="switchTab('led')">💡 LED控制</button>
+        <button onclick="switchTab('maintain')">🔧 设备维护</button>
     </div>
 
-    <div class="swim-tip" id="swimTip">--</div>
-    <div class="mode-display" id="modeDisplay">当前模式: --</div>
+    <!-- ==================== LED 控制页 ==================== -->
+    <div id="tab-led">
+        <div class="alert-box" id="alertBox"></div>
 
-    <div class="section">
-        <h3>🔌 电源</h3>
-        <div class="btn-row">
-            <button onclick="sendCmd('开机')">开机</button>
-            <button onclick="sendCmd('关机')">关机</button>
+        <div class="status-bar">
+            <div class="status-item"><div class="status-val" id="valTemp">--</div><div class="status-label">气温℃</div></div>
+            <div class="status-item"><div class="status-val" id="valHum">--</div><div class="status-label">湿度%</div></div>
+            <div class="status-item"><div class="status-val" id="valPress">--</div><div class="status-label">气压hPa</div></div>
+            <div class="status-item"><div class="status-val" id="valTDS">--</div><div class="status-label">TDS</div></div>
+            <div class="status-item"><div class="status-val" id="valWT">--</div><div class="status-label">水温℃</div></div>
+            <div class="status-item"><div class="status-val" id="valPH">--</div><div class="status-label">PH</div></div>
+            <div class="status-item"><div class="status-val" id="valTurb">--</div><div class="status-label">浊度NTU</div></div>
+            <div class="status-item"><div class="status-val" id="valWL">--</div><div class="status-label">水位</div></div>
+        </div>
+
+        <div class="swim-tip" id="swimTip">--</div>
+        <div class="mode-display" id="modeDisplay">当前模式: --</div>
+
+        <div class="section"><h3>🔌 电源</h3><div class="btn-row"><button onclick="sendCmd('开机')">开机</button><button onclick="sendCmd('关机')">关机</button></div></div>
+        <div class="section"><h3>💡 灯光</h3><div class="btn-row"><button onclick="sendCmd('常亮')">常亮</button></div></div>
+        <div class="section"><h3>🔆 亮度</h3><div class="btn-row"><button onclick="sendCmd('亮度25')">25%</button><button onclick="sendCmd('亮度50')">50%</button><button onclick="sendCmd('亮度75')">75%</button><button onclick="sendCmd('亮度100')">100%</button></div></div>
+        <div class="section"><h3>🎨 模式</h3><div class="btn-row"><button onclick="sendCmd('呼吸灯')">呼吸灯</button><button onclick="sendCmd('流水1')">流水1</button><button onclick="sendCmd('流水2')">流水2</button><button onclick="sendCmd('流水3')">流水3</button></div></div>
+        <div class="section"><h3>🔢 顺序</h3><div class="order-area"><input type="text" id="orderInput" placeholder="例: 1,3,2"><button onclick="setOrder()">保存</button></div><div class="btn-row" style="margin-top:6px"><button onclick="sendCmd('恢复默认')">恢复默认</button></div></div>
+    </div>
+
+    <!-- ==================== 设备维护页 ==================== -->
+    <div id="tab-maintain" style="display:none">
+        <div class="cal-card">
+            <h4>🧪 EC 传感器</h4>
+            <p>纯净水校准零点，约需 1 分钟</p>
+            <div class="cal-info">
+                <span class="cal-time" id="ecTime">--</span>
+                <span class="cal-due" id="ecDue">--</span>
+            </div>
+            <button onclick="startCal('EC')">校准</button>
+            <button onclick="showGuide('EC')">说明</button>
+            <button class="btn-history" onclick="toggleHistory('ecHistory')">历史</button>
+            <div class="history-list" id="ecHistory"></div>
+        </div>
+
+        <div class="cal-card">
+            <h4>📊 PH 传感器</h4>
+            <p>零点(pH 6.86) | 斜率(pH 9.18)</p>
+            <div class="cal-info">
+                <span class="cal-time" id="phTime">--</span>
+                <span class="cal-due" id="phDue">--</span>
+            </div>
+            <button onclick="startCal('PH_zero')">零点校准</button>
+            <button onclick="startCal('PH_slope')">斜率校准</button>
+            <button onclick="showGuide('PH')">说明</button>
+            <button class="btn-history" onclick="toggleHistory('phHistory')">历史</button>
+            <div class="history-list" id="phHistory"></div>
+        </div>
+
+        <div class="cal-card">
+            <h4>💧 浊度传感器</h4>
+            <p>纯净水校准零点，约需 1 分钟</p>
+            <div class="cal-info">
+                <span class="cal-time" id="turbTime">--</span>
+                <span class="cal-due" id="turbDue">--</span>
+            </div>
+            <button onclick="startCal('Turb')">校准</button>
+            <button onclick="showGuide('Turb')">说明</button>
+            <button class="btn-history" onclick="toggleHistory('turbHistory')">历史</button>
+            <div class="history-list" id="turbHistory"></div>
         </div>
     </div>
 
-    <div class="section">
-        <h3>💡 灯光</h3>
-        <div class="btn-row">
-            <button onclick="sendCmd('常亮')">常亮</button>
+    <!-- 校准等待弹窗 -->
+    <div class="modal" id="calModal">
+        <div class="modal-content">
+            <h3 id="calTitle">校准中</h3>
+            <p id="calMsg">请稍候...</p>
+            <div class="spinner"></div>
+            <p style="color:#888;font-size:12px">校准过程中请勿操作</p>
         </div>
     </div>
 
-    <div class="section">
-        <h3>🔆 亮度</h3>
-        <div class="btn-row">
-            <button onclick="sendCmd('亮度25')">25%</button>
-            <button onclick="sendCmd('亮度50')">50%</button>
-            <button onclick="sendCmd('亮度75')">75%</button>
-            <button onclick="sendCmd('亮度100')">100%</button>
+    <!-- 说明弹窗 -->
+    <div class="modal" id="guideModal">
+        <div class="modal-content">
+            <h3 id="guideTitle">校准说明</h3>
+            <p id="guideMsg"></p>
+            <button onclick="closeGuide()">知道了</button>
         </div>
-    </div>
-
-    <div class="section">
-        <h3>🎨 模式</h3>
-        <div class="btn-row">
-            <button onclick="sendCmd('呼吸灯')">呼吸灯</button>
-            <button onclick="sendCmd('流水1')">流水1</button>
-            <button onclick="sendCmd('流水2')">流水2</button>
-            <button onclick="sendCmd('流水3')">流水3</button>
-        </div>
-    </div>
-
-    <div class="section">
-        <h3>🔢 流水灯顺序</h3>
-        <div class="order-area">
-            <input type="text" id="orderInput" placeholder="例: 1,3,2,5,4">
-            <button onclick="setOrder()">保存</button>
-        </div>
-        <div class="btn-row" style="margin-top:6px;">
-            <button onclick="sendCmd('恢复默认')">恢复默认</button>
-        </div>
-        <p style="font-size:10px;color:#888;margin-top:5px;">不设置默认按地址顺序</p>
-    </div>
-
-    <div class="section">
-        <h3>🔧 校准</h3>
-        <div class="btn-row">
-            <button onclick="sendCmd('校准EC')">EC校准</button>
-        </div>
-        <p style="font-size:10px;color:#888;margin-top:5px;">探头放入纯净水中再点校准</p>
     </div>
 </div>
 
-<!-- Service Worker -->
 <script>
-    if('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/ZDled-controller/service-worker.js');
+    // ==================== BLE ====================
+    let bleDevice, bleServer, bleChar, connected = false;
+    const SVC = "12345678-1234-1234-1234-123456789abc";
+    const CHR = "abcd1234-1234-1234-1234-123456789abc";
+
+    // ==================== 校准数据存储 ====================
+    const CAL_DAYS = {EC: 90, PH: 30, Turb: 90};
+
+    function getCalData(type) {
+        let d = localStorage.getItem('cal_' + type);
+        return d ? JSON.parse(d) : { lastTime: null, history: [] };
     }
-</script>
+    function saveCalData(type, data) { localStorage.setItem('cal_' + type, JSON.stringify(data)); }
 
-<!-- PWA 安装弹窗 -->
-<script>
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', function(e) {
-        e.preventDefault();
-        deferredPrompt = e;
-        setTimeout(function() {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(function(result) {
-                deferredPrompt = null;
-            });
-        }, 1000);
-    });
-</script>
+    function addCalRecord(type) {
+        let d = getCalData(type);
+        let now = new Date().toISOString();
+        d.lastTime = now;
+        d.history.unshift(now);
+        if (d.history.length > 20) d.history.pop();
+        saveCalData(type, d);
+        updateCalUI(type);
+    }
 
-<!-- BLE 逻辑 -->
-<script>
-    let bleDevice, bleServer, bleChar;
-    let connected = false;
+    function formatDate(iso) {
+        if (!iso) return '--';
+        let d = new Date(iso);
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
 
-    const SERVICE_UUID = "12345678-1234-1234-1234-123456789abc";
-    const CHAR_UUID    = "abcd1234-1234-1234-1234-123456789abc";
+    function daysUntil(iso, interval) {
+        if (!iso) return -1;
+        let last = new Date(iso);
+        let next = new Date(last.getTime() + interval * 86400000);
+        return Math.ceil((next - new Date()) / 86400000);
+    }
 
+    function updateCalUI(type) {
+        let d = getCalData(type);
+        let key = type === 'PH' ? 'ph' : type.toLowerCase();
+        document.getElementById(key + 'Time').innerText = '上次: ' + formatDate(d.lastTime);
+        let remain = daysUntil(d.lastTime, CAL_DAYS[type]);
+        let dueEl = document.getElementById(key + 'Due');
+        if (remain < 0) { dueEl.innerText = '未校准'; dueEl.className = 'cal-due over'; }
+        else if (remain <= 7) { dueEl.innerText = remain + '天后到期'; dueEl.className = 'cal-due warn'; }
+        else { dueEl.innerText = remain + '天'; dueEl.className = 'cal-due ok'; }
+        let histEl = document.getElementById(key + 'History');
+        histEl.innerHTML = d.history.map(t => '<div class="history-item">' + formatDate(t) + '</div>').join('');
+    }
+
+    function toggleHistory(id) { document.getElementById(id).classList.toggle('show'); }
+
+    ['EC','PH','Turb'].forEach(t => updateCalUI(t));
+
+    // ==================== 标签切换 ====================
+    function switchTab(tab) {
+        document.getElementById('tab-led').style.display = tab === 'led' ? 'block' : 'none';
+        document.getElementById('tab-maintain').style.display = tab === 'maintain' ? 'block' : 'none';
+        document.querySelectorAll('.tab-bar button')[0].classList.toggle('active', tab === 'led');
+        document.querySelectorAll('.tab-bar button')[1].classList.toggle('active', tab === 'maintain');
+    }
+
+    // ==================== BLE 连接 ====================
     async function connectBLE() {
         try {
             document.getElementById('connStatus').innerText = '搜索中...';
-            bleDevice = await navigator.bluetooth.requestDevice({
-                filters: [{ services: [SERVICE_UUID] }]
-            });
-            document.getElementById('connStatus').innerText = '已找到设备';
-
+            bleDevice = await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}]});
             bleServer = await bleDevice.gatt.connect();
-            document.getElementById('connStatus').innerText = '已连接GATT';
-
-            let service = await bleServer.getPrimaryService(SERVICE_UUID);
-            document.getElementById('connStatus').innerText = '已获取服务';
-
-            bleChar = await service.getCharacteristic(CHAR_UUID);
-            document.getElementById('connStatus').innerText = '已获取特征';
-
+            let svc = await bleServer.getPrimaryService(SVC);
+            bleChar = await svc.getCharacteristic(CHR);
             await bleChar.startNotifications();
-            document.getElementById('connStatus').innerText = '✅ 已连接';
-
-            bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
-
+            bleChar.addEventListener('characteristicvaluechanged', onData);
             connected = true;
+            document.getElementById('connStatus').innerText = '✅ 已连接';
             document.getElementById('btnDisconn').style.display = 'inline-block';
-            bleDevice.addEventListener('gattserverdisconnected', onDisconnect);
-        } catch(e) {
-            document.getElementById('connStatus').innerText = '失败: ' + e.message;
-        }
+            bleDevice.addEventListener('gattserverdisconnected', () => {
+                connected = false;
+                document.getElementById('connStatus').innerText = '❌ 已断开';
+                document.getElementById('btnDisconn').style.display = 'none';
+            });
+        } catch(e) { document.getElementById('connStatus').innerText = '连接失败'; }
     }
 
-    function disconnectBLE() {
-        if(bleServer) bleServer.disconnect();
-    }
+    function disconnectBLE() { if(bleServer) bleServer.disconnect(); }
+    async function sendCmd(c) { if(connected && bleChar) await bleChar.writeValue(new TextEncoder().encode(c)); }
+    function setOrder() { let v = document.getElementById('orderInput').value.trim(); if(v) sendCmd('序:' + v); }
 
-    function onDisconnect() {
-        connected = false;
-        document.getElementById('connStatus').innerText = '❌ 已断开';
-        document.getElementById('btnDisconn').style.display = 'none';
-    }
-
-    async function sendCmd(cmd) {
-        if(!connected || !bleChar) return;
+    // ==================== 数据接收 ====================
+    function onData(event) {
         try {
-            await bleChar.writeValue(new TextEncoder().encode(cmd));
+            let txt = new TextDecoder().decode(event.target.value);
+
+            if (txt === '校准完成') {
+                closeCal();
+                alert('✅ 校准完成！');
+                if (lastCalType) { addCalRecord(lastCalType); lastCalType = null; }
+                return;
+            }
+            if (txt === '校准失败') {
+                closeCal();
+                alert('❌ 校准失败，请重试');
+                lastCalType = null;
+                return;
+            }
+
+            let d = JSON.parse(txt);
+            document.getElementById('valTemp').innerText = d.t ?? '--';
+            document.getElementById('valHum').innerText = d.h ?? '--';
+            document.getElementById('valPress').innerText = d.p ?? '--';
+            document.getElementById('valTDS').innerText = d.tds ?? '--';
+            document.getElementById('valWT').innerText = d.wt ?? '--';
+            document.getElementById('valPH').innerText = d.ph ?? '--';
+            document.getElementById('valTurb').innerText = d.turb ?? '--';
+            let wlMap = {'High':'高','Normal':'正常','Low':'低'};
+            document.getElementById('valWL').innerText = wlMap[d.wl] ?? '--';
+            document.getElementById('modeDisplay').innerText = '当前模式: ' + (d.mode || '--');
+            let tip = document.getElementById('swimTip');
+            tip.innerHTML = d.swim === 'good' ? '<span class="swim-good">✅ 适合游泳</span>' : '<span class="swim-bad">❌ 不适合游泳</span>';
+            let ab = document.getElementById('alertBox');
+            if(d.alert) { ab.innerText = '⚠️ ' + d.alert; ab.classList.add('show'); }
+            else ab.classList.remove('show');
         } catch(e) {}
     }
 
-    function setOrder() {
-        let val = document.getElementById('orderInput').value.trim();
-        if(val) sendCmd('序:' + val);
-    }
+    // ==================== 校准 ====================
+    let calTimeout, lastCalType = null;
 
-    function onDataReceived(event) {
-        try {
-            let json = JSON.parse(new TextDecoder().decode(event.target.value));
-            updateUI(json);
-        } catch(e) {}
-    }
-
-    function updateUI(data) {
-        document.getElementById('valTemp').innerText  = data.t  ?? '--';
-        document.getElementById('valHum').innerText   = data.h  ?? '--';
-        document.getElementById('valPress').innerText = data.p  ?? '--';
-        document.getElementById('valTDS').innerText   = data.tds ?? '--';
-        document.getElementById('valWT').innerText    = data.wt ?? '--';
-
-        let wlMap = {'High':'高','Normal':'正常','Low':'低'};
-        document.getElementById('valWL').innerText = wlMap[data.wl] ?? '--';
-
-        document.getElementById('modeDisplay').innerText = '当前模式: ' + (data.mode || '--');
-
-        let tip = document.getElementById('swimTip');
-        if(data.swim == 'good') {
-            tip.innerHTML = '<span class="swim-good">✅ 适合游泳</span>';
-        } else if(data.swim == 'bad') {
-            tip.innerHTML = '<span class="swim-bad">❌ 不适合游泳</span>';
+    function startCal(type) {
+        lastCalType = type;
+        if (type === 'PH_zero') {
+            document.getElementById('calTitle').innerText = 'PH 零点校准';
+            document.getElementById('calMsg').innerText = '请将电极放入 pH 6.86 缓冲液中\n等待 2 分钟...';
+            document.getElementById('calModal').classList.add('show');
+            sendCmd('校准PH_zero');
+            calTimeout = setTimeout(() => { closeCal(); alert('校准超时，请重试'); }, 150000);
+        } else if (type === 'PH_slope') {
+            document.getElementById('calTitle').innerText = 'PH 斜率校准';
+            document.getElementById('calMsg').innerText = '请将电极放入 pH 9.18 缓冲液中\n等待 2 分钟...';
+            document.getElementById('calModal').classList.add('show');
+            sendCmd('校准PH_slope');
+            calTimeout = setTimeout(() => { closeCal(); alert('校准超时，请重试'); }, 150000);
         } else {
-            tip.innerText = '--';
-        }
-
-        let alertBox = document.getElementById('alertBox');
-        if(data.alert) {
-            alertBox.innerText = '⚠️ ' + data.alert;
-            alertBox.classList.add('show');
-        } else {
-            alertBox.classList.remove('show');
+            document.getElementById('calTitle').innerText = type + ' 校准中';
+            document.getElementById('calMsg').innerText = '请稍候约 1 分钟...';
+            document.getElementById('calModal').classList.add('show');
+            sendCmd('校准' + type);
+            calTimeout = setTimeout(() => { closeCal(); alert('校准超时，请重试'); }, 120000);
         }
     }
+
+    function closeCal() {
+        document.getElementById('calModal').classList.remove('show');
+        if (calTimeout) clearTimeout(calTimeout);
+    }
+
+    function showGuide(type) {
+        let msg = '';
+        if (type === 'EC') msg = '1. 探头用去离子水冲洗干净\n2. 放入纯净水中\n3. 点击校准\n4. 等待约 1 分钟完成';
+        else if (type === 'PH') msg = '⚠️ 请确保设备已上电预热 10 分钟以上\n\n【零点校准】\n1. 电极放入 pH 6.86 缓冲液\n2. 点击"零点校准"\n3. 等待 2 分钟\n\n【斜率校准】\n4. 取出冲洗，放入 pH 9.18 缓冲液\n5. 点击"斜率校准"\n6. 等待 2 分钟';
+        else if (type === 'Turb') msg = '1. 探头用纯净水冲洗\n2. 放入纯净水中，确保无气泡\n3. 点击校准\n4. 等待约 1 分钟完成';
+        document.getElementById('guideTitle').innerText = type + ' 校准说明';
+        document.getElementById('guideMsg').innerText = msg;
+        document.getElementById('guideModal').classList.add('show');
+    }
+
+    function closeGuide() { document.getElementById('guideModal').classList.remove('show'); }
 </script>
 </body>
 </html>
