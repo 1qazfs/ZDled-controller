@@ -116,7 +116,7 @@
     <div id="tab-maintain" style="display:none">
         <div class="cal-card">
             <h4>🧪 EC 传感器</h4>
-            <p>纯净水校准零点，约需 1 分钟</p>
+            <p>纯净水校准零点，约需 2 分钟</p>
             <div class="cal-info">
                 <span class="cal-time" id="ecTime">--</span>
                 <span class="cal-due" id="ecDue">--</span>
@@ -129,7 +129,7 @@
 
         <div class="cal-card">
             <h4>📊 PH 传感器</h4>
-            <p>零点(pH 6.86) | 斜率(pH 9.18)</p>
+            <p>零点(pH 6.86) | 斜率(pH 9.18)，各需约 2 分钟</p>
             <div class="cal-info">
                 <span class="cal-time" id="phTime">--</span>
                 <span class="cal-due" id="phDue">--</span>
@@ -143,7 +143,7 @@
 
         <div class="cal-card">
             <h4>💧 浊度传感器</h4>
-            <p>纯净水校准零点，约需 1 分钟</p>
+            <p>纯净水校准零点，约需 2 分钟</p>
             <div class="cal-info">
                 <span class="cal-time" id="turbTime">--</span>
                 <span class="cal-due" id="turbDue">--</span>
@@ -263,24 +263,83 @@
     async function sendCmd(c) { if(connected && bleChar) await bleChar.writeValue(new TextEncoder().encode(c)); }
     function setOrder() { let v = document.getElementById('orderInput').value.trim(); if(v) sendCmd('序:' + v); }
 
-    // ==================== 数据接收 ====================
+    // ==================== 自定义弹窗函数 ====================
+    function showAlert(title, message) {
+        // 移除已存在的弹窗
+        let existingModal = document.getElementById('alertModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // 创建自定义弹窗
+        let modal = document.createElement('div');
+        modal.id = 'alertModal';
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>${title}</h3>
+                <p>${message}</p>
+                <button onclick="this.closest('.modal').remove()">确定</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // ==================== 数据接收（已添加防重复处理） ====================
+    let calCompleted = false; // 防止重复处理校准完成消息
+
     function onData(event) {
         try {
             let txt = new TextDecoder().decode(event.target.value);
 
+            // 校准完成消息
             if (txt === '校准完成') {
+                if (calCompleted) return;
+                calCompleted = true;
                 closeCal();
-                alert('✅ 校准完成！');
-                if (lastCalType) { addCalRecord(lastCalType); lastCalType = null; }
+                setTimeout(() => {
+                    showAlert('✅ 校准完成', '传感器校准成功完成！');
+                }, 300);
+                if (lastCalType) { 
+                    addCalRecord(lastCalType); 
+                    lastCalType = null; 
+                }
                 return;
             }
-            if (txt === '校准失败') {
+
+            // 校准失败消息（支持各种失败提示）
+            if (txt.startsWith('EC校准失败') || 
+                txt.startsWith('PH零点校准失败') || 
+                txt.startsWith('PH斜率校准失败') || 
+                txt.startsWith('浊度校准失败') ||
+                txt.startsWith('校准失败')) {
+                if (calCompleted) return;
+                calCompleted = true;
                 closeCal();
-                alert('❌ 校准失败，请重试');
+                
+                // 直接显示完整的失败信息
+                let failMsg = txt;
+                
+                setTimeout(() => {
+                    showAlert('❌ 校准失败', failMsg);
+                }, 300);
                 lastCalType = null;
                 return;
             }
 
+            // 校准超时消息
+            if (txt === '校准超时') {
+                if (calCompleted) return;
+                calCompleted = true;
+                closeCal();
+                setTimeout(() => {
+                    showAlert('⏰ 校准超时', '校准过程超时，请检查设备连接并重试');
+                }, 300);
+                lastCalType = null;
+                return;
+            }
+
+            // 解析 JSON 数据
             let d = JSON.parse(txt);
             document.getElementById('valTemp').innerText = d.t ?? '--';
             document.getElementById('valHum').innerText = d.h ?? '--';
@@ -300,42 +359,84 @@
         } catch(e) {}
     }
 
-    // ==================== 校准 ====================
+    // ==================== 校准（所有校准时间统一为 2 分钟） ====================
     let calTimeout, lastCalType = null;
 
     function startCal(type) {
         lastCalType = type;
+        calCompleted = false; // 重置防重复标志
+        
+        // 统一超时时间：2分钟 + 30秒余量 = 150秒
+        const CAL_TIMEOUT = 150000; // 150秒
+        
         if (type === 'PH_zero') {
             document.getElementById('calTitle').innerText = 'PH 零点校准';
             document.getElementById('calMsg').innerText = '请将电极放入 pH 6.86 缓冲液中\n等待 2 分钟...';
             document.getElementById('calModal').classList.add('show');
             sendCmd('校准PH_zero');
-            calTimeout = setTimeout(() => { closeCal(); alert('校准超时，请重试'); }, 150000);
+            calTimeout = setTimeout(() => { 
+                if (!calCompleted) {
+                    calCompleted = true;
+                    closeCal(); 
+                    showAlert('⏰ 校准超时', '校准过程超时，请重试');
+                    lastCalType = null;
+                }
+            }, CAL_TIMEOUT);
         } else if (type === 'PH_slope') {
             document.getElementById('calTitle').innerText = 'PH 斜率校准';
             document.getElementById('calMsg').innerText = '请将电极放入 pH 9.18 缓冲液中\n等待 2 分钟...';
             document.getElementById('calModal').classList.add('show');
             sendCmd('校准PH_slope');
-            calTimeout = setTimeout(() => { closeCal(); alert('校准超时，请重试'); }, 150000);
-        } else {
-            document.getElementById('calTitle').innerText = type + ' 校准中';
-            document.getElementById('calMsg').innerText = '请稍候约 1 分钟...';
+            calTimeout = setTimeout(() => { 
+                if (!calCompleted) {
+                    calCompleted = true;
+                    closeCal(); 
+                    showAlert('⏰ 校准超时', '校准过程超时，请重试');
+                    lastCalType = null;
+                }
+            }, CAL_TIMEOUT);
+        } else if (type === 'EC') {
+            document.getElementById('calTitle').innerText = 'EC 校准中';
+            document.getElementById('calMsg').innerText = '请将探头放入纯净水中\n等待 2 分钟...';
             document.getElementById('calModal').classList.add('show');
-            sendCmd('校准' + type);
-            calTimeout = setTimeout(() => { closeCal(); alert('校准超时，请重试'); }, 120000);
+            sendCmd('校准EC');
+            calTimeout = setTimeout(() => { 
+                if (!calCompleted) {
+                    calCompleted = true;
+                    closeCal(); 
+                    showAlert('⏰ 校准超时', '校准过程超时，请重试');
+                    lastCalType = null;
+                }
+            }, CAL_TIMEOUT);
+        } else if (type === 'Turb') {
+            document.getElementById('calTitle').innerText = '浊度校准中';
+            document.getElementById('calMsg').innerText = '请将探头放入纯净水中\n确保无气泡\n等待 2 分钟...';
+            document.getElementById('calModal').classList.add('show');
+            sendCmd('校准Turb');
+            calTimeout = setTimeout(() => { 
+                if (!calCompleted) {
+                    calCompleted = true;
+                    closeCal(); 
+                    showAlert('⏰ 校准超时', '校准过程超时，请重试');
+                    lastCalType = null;
+                }
+            }, CAL_TIMEOUT);
         }
     }
 
     function closeCal() {
         document.getElementById('calModal').classList.remove('show');
-        if (calTimeout) clearTimeout(calTimeout);
+        if (calTimeout) {
+            clearTimeout(calTimeout);
+            calTimeout = null;
+        }
     }
 
     function showGuide(type) {
         let msg = '';
-        if (type === 'EC') msg = '1. 探头用去离子水冲洗干净\n2. 放入纯净水中\n3. 点击校准\n4. 等待约 1 分钟完成';
+        if (type === 'EC') msg = '1. 探头用去离子水冲洗干净\n2. 放入纯净水中\n3. 点击校准\n4. 等待约 2 分钟完成';
         else if (type === 'PH') msg = '⚠️ 请确保设备已上电预热 10 分钟以上\n\n【零点校准】\n1. 电极放入 pH 6.86 缓冲液\n2. 点击"零点校准"\n3. 等待 2 分钟\n\n【斜率校准】\n4. 取出冲洗，放入 pH 9.18 缓冲液\n5. 点击"斜率校准"\n6. 等待 2 分钟';
-        else if (type === 'Turb') msg = '1. 探头用纯净水冲洗\n2. 放入纯净水中，确保无气泡\n3. 点击校准\n4. 等待约 1 分钟完成';
+        else if (type === 'Turb') msg = '1. 探头用纯净水冲洗\n2. 放入纯净水中，确保无气泡\n3. 点击校准\n4. 等待约 2 分钟完成';
         document.getElementById('guideTitle').innerText = type + ' 校准说明';
         document.getElementById('guideMsg').innerText = msg;
         document.getElementById('guideModal').classList.add('show');
