@@ -129,7 +129,7 @@
 
         <div class="cal-card">
             <h4>📊 PH 传感器</h4>
-            <p>零点(pH 6.86) | 斜率(pH 9.18)，读数稳定后执行校准</p>
+            <p>零点(pH 6.86) | 斜率(pH 9.18)，溶液稳定后再校准</p>
             <div class="cal-info">
                 <span class="cal-time" id="phTime">--</span>
                 <span class="cal-due" id="phDue">--</span>
@@ -262,13 +262,17 @@
 
     function disconnectBLE() { if(bleServer) bleServer.disconnect(); }
 
-    // 升级BLE发送：带应答写入，捕获异常
+    // ==========【重点：带自动降级容错发送函数】==========
     async function sendCmd(c) {
         if(!connected || !bleChar) return;
+        const buf = new TextEncoder().encode(c);
         try{
-            await bleChar.writeValueWithResponse(new TextEncoder().encode(c));
+            //优先带应答写入，大幅降低丢包
+            await bleChar.writeValueWithResponse(buf);
         }catch(err){
-            console.log("指令发送失败：",err);
+            console.log("【警告】带应答发送失败，自动降级无响应模式",err);
+            //老旧手机浏览器兼容兜底
+            bleChar.writeValue(buf);
         }
     }
 
@@ -301,7 +305,7 @@
         try {
             let txt = new TextDecoder().decode(event.target.value);
 
-            // ============ 重要修改：匹配 ESP32 "校准成功" ============
+            // ============ 匹配 ESP32 "校准成功" ============
             if (txt === '校准成功') {
                 if (calCompleted) return;
                 calCompleted = true;
@@ -362,7 +366,7 @@
         }
     }
 
-    // ==================== 校准逻辑 【重点修改】 ====================
+    // ==================== 校准逻辑 ====================
     let calTimeout, lastCalType = null;
     const CAL_TIMEOUT = 30000; // 30秒超时
 
