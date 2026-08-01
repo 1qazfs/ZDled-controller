@@ -65,19 +65,15 @@
 <body>
 <div class="container">
     <h2>🏊 泳池控制</h2>
-
     <div class="connect-area">
         <button class="btn-connect" onclick="connectBLE()">🔗 连接设备</button>
         <button class="btn-disconnect" id="btnDisconn" onclick="disconnectBLE()">断开</button>
         <p id="connStatus" style="margin-top:5px;font-size:12px;color:#888">未连接</p>
     </div>
-
     <div class="tab-bar">
         <button class="active" onclick="switchTab('led')">💡 LED控制</button>
         <button onclick="switchTab('maintain')">🔧 设备维护</button>
     </div>
-
-    <!-- LED 控制页 -->
     <div id="tab-led">
         <div class="alert-box" id="alertBox"></div>
         <div class="status-bar">
@@ -98,19 +94,13 @@
         <div class="section"><h3>🎨 模式</h3><div class="btn-row"><button onclick="sendCmd('呼吸灯')">呼吸灯</button><button onclick="sendCmd('流水1')">流水1</button><button onclick="sendCmd('流水2')">流水2</button><button onclick="sendCmd('流水3')">流水3</button></div></div>
         <div class="section"><h3>🔢 顺序</h3><div class="order-area"><input type="text" id="orderInput" placeholder="例: 1,3,2"><button onclick="setOrder()">保存</button></div><div class="btn-row" style="margin-top:6px"><button onclick="sendCmd('恢复默认')">恢复默认</button></div></div>
     </div>
-
-    <!-- 设备维护页 -->
     <div id="tab-maintain" style="display:none">
         <div class="cal-card"><h4>🧪 EC 传感器</h4><p>放入纯净水等待读数稳定后执行校准</p><div class="cal-info"><span class="cal-time" id="ecTime">--</span><span class="cal-due" id="ecDue">--</span></div><button onclick="startCal('EC')">校准</button><button onclick="showGuide('EC')">说明</button><button class="btn-history" onclick="toggleHistory('ecHistory')">历史</button><div class="history-list" id="ecHistory"></div></div>
         <div class="cal-card"><h4>📊 PH 传感器</h4><p>零点(pH 6.86) | 斜率(pH 9.18)，读数稳定后执行校准</p><div class="cal-info"><span class="cal-time" id="phTime">--</span><span class="cal-due" id="phDue">--</span></div><button onclick="startCal('PH_zero')">零点校准</button><button onclick="startCal('PH_slope')">斜率校准</button><button onclick="showGuide('PH')">说明</button><button class="btn-history" onclick="toggleHistory('phHistory')">历史</button><div class="history-list" id="phHistory"></div></div>
         <div class="cal-card"><h4>💧 浊度传感器</h4><p>放入纯净水排尽气泡，读数稳定后执行校准</p><div class="cal-info"><span class="cal-time" id="turbTime">--</span><span class="cal-due" id="turbDue">--</span></div><button onclick="startCal('Turb')">校准</button><button onclick="showGuide('Turb')">说明</button><button class="btn-history" onclick="toggleHistory('turbHistory')">历史</button><div class="history-list" id="turbHistory"></div></div>
     </div>
-
-    <!-- 校准等待弹窗 -->
     <div class="modal" id="calModal"><div class="modal-content"><h3 id="calTitle">校准中</h3><p id="calMsg">请稍候...</p><div class="spinner"></div><p style="color:#888;font-size:12px">校准过程中请勿操作</p></div></div>
-    <!-- 说明弹窗 -->
     <div class="modal" id="guideModal"><div class="modal-content"><h3 id="guideTitle">校准说明</h3><p id="guideMsg"></p><button onclick="closeGuide()">知道了</button></div></div>
-    <!-- 通用提示弹窗 -->
     <div class="modal" id="alertModal"><div class="modal-content"><h3 id="alertTitle"></h3><p id="alertMsg"></p><button onclick="document.getElementById('alertModal').classList.remove('show')">确定</button></div></div>
 </div>
 
@@ -120,16 +110,22 @@
     const SVC = "12345678-1234-1234-1234-123456789abc";
     const CHR = "abcd1234-1234-1234-1234-123456789abc";
     const CAL_DAYS = {EC: 90, PH: 30, Turb: 90};
-    let calBusy = false, calTimeout = null, lastCalType = null;
-    let lastSuccessMsg = '';  // 缓存最近的成功消息，防止重复
+    let calBusy = false, calTimeout = null, pendingCalType = null;
+    let lastSuccessMsg = '';
 
     // ==================== 校准存储 ====================
     function getCalData(type) { let d = localStorage.getItem('cal_' + type); return d ? JSON.parse(d) : { lastTime: null, history: [] }; }
     function saveCalData(type, data) { localStorage.setItem('cal_' + type, JSON.stringify(data)); }
-    function addCalRecord(type) { let d = getCalData(type); let now = new Date().toISOString(); d.lastTime = now; d.history.unshift(now); if(d.history.length > 20) d.history.pop(); saveCalData(type, d); updateCalUI(type); }
+    function addCalRecord(type) {
+        if(!type) return;
+        let d = getCalData(type); let now = new Date().toISOString();
+        d.lastTime = now; d.history.unshift(now);
+        if(d.history.length > 20) d.history.pop();
+        saveCalData(type, d); updateCalUI(type);
+        console.log('校准记录已保存:', type, now);
+    }
     function formatDate(iso) { if(!iso) return '--'; let d = new Date(iso); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
     function daysUntil(iso, interval) { if(!iso) return -1; let last = new Date(iso); let next = new Date(last.getTime() + interval * 86400000); return Math.ceil((next - new Date()) / 86400000); }
-
     function updateCalUI(type) {
         let d = getCalData(type); let key = type === 'PH' ? 'ph' : type.toLowerCase();
         document.getElementById(key + 'Time').innerText = '上次: ' + formatDate(d.lastTime);
@@ -143,7 +139,6 @@
     ['EC','PH','Turb'].forEach(t => updateCalUI(t));
     function switchTab(tab) { document.getElementById('tab-led').style.display = tab==='led'?'block':'none'; document.getElementById('tab-maintain').style.display = tab==='maintain'?'block':'none'; document.querySelectorAll('.tab-bar button')[0].classList.toggle('active',tab==='led'); document.querySelectorAll('.tab-bar button')[1].classList.toggle('active',tab==='maintain'); }
 
-    // ==================== 通用弹窗 ====================
     function showAlert(title, msg) { document.getElementById('alertTitle').innerText = title; document.getElementById('alertMsg').innerText = msg; document.getElementById('alertModal').classList.add('show'); }
 
     // ==================== BLE 连接 ====================
@@ -163,7 +158,7 @@
         } catch(e) { document.getElementById('connStatus').innerText = '连接失败'; }
     }
     function disconnectBLE() { if(bleServer) bleServer.disconnect(); }
-    async function sendCmd(c) { if(!connected||!bleChar) return; try{ await bleChar.writeValueWithResponse(new TextEncoder().encode(c)); } catch(e){ console.log("发送失败",e); } }
+    async function sendCmd(c) { if(!connected||!bleChar) return; try{ await bleChar.writeValueWithResponse(new TextEncoder().encode(c)); } catch(e){} }
     function setOrder() { let v = document.getElementById('orderInput').value.trim(); if(v) sendCmd('序:' + v); }
 
     // ==================== 数据接收 ====================
@@ -171,28 +166,32 @@
         try {
             let txt = new TextDecoder().decode(event.target.value);
 
-            // 匹配所有成功消息（EC校准成功、PH零点校准成功、浊度校准成功等）
+            // 匹配成功消息
             if(txt.includes('成功') && (txt.includes('校准') || txt.includes('EC') || txt.includes('PH') || txt.includes('浊度'))) {
-                // 防止重复弹窗（同一消息一秒内不重复）
                 if(txt === lastSuccessMsg) return;
-                lastSuccessMsg = txt;
-                setTimeout(() => lastSuccessMsg = '', 1000);
-
+                lastSuccessMsg = txt; setTimeout(() => lastSuccessMsg = '', 2000);
                 closeCal();
                 setTimeout(() => showAlert('✅ 校准完成', txt), 400);
-                if(lastCalType) { addCalRecord(lastCalType); lastCalType = null; }
+
+                // 从消息文本推断校准类型
+                let calType = null;
+                if(txt.includes('EC')) calType = 'EC';
+                else if(txt.includes('PH') && txt.includes('零点')) calType = 'PH';
+                else if(txt.includes('PH') && txt.includes('斜率')) calType = 'PH';
+                else if(txt.includes('浊度')) calType = 'Turb';
+                if(calType) { addCalRecord(calType); console.log('校准类型:', calType); }
+                pendingCalType = null;
                 return;
             }
 
-            // 匹配失败消息
+            // 匹配失败/超时
             if(txt.includes('失败') || txt.includes('超时')) {
-                closeCal();
+                closeCal(); pendingCalType = null;
                 setTimeout(() => showAlert('❌ 校准失败', txt), 400);
-                lastCalType = null;
                 return;
             }
 
-            // 解析JSON传感器数据
+            // 解析JSON
             let d = JSON.parse(txt);
             document.getElementById('valTemp').innerText = d.t ?? '--';
             document.getElementById('valHum').innerText = d.h ?? '--';
@@ -214,7 +213,8 @@
     // ==================== 校准逻辑 ====================
     function startCal(type) {
         if(calBusy){ showAlert('提示','正在进行校准，请等待完成！'); return; }
-        calBusy = true; lastCalType = type;
+        calBusy = true;
+        pendingCalType = type.includes('PH') ? 'PH' : type;
         let title = '', msg = '';
         switch(type) {
             case 'EC': title='EC 校准中'; msg='请先将探头放入纯净水中\n等待读数稳定后再开始校准'; sendCmd('校准EC'); break;
@@ -225,7 +225,7 @@
         document.getElementById('calTitle').innerText = title;
         document.getElementById('calMsg').innerText = msg;
         document.getElementById('calModal').classList.add('show');
-        calTimeout = setTimeout(() => { closeCal(); showAlert('⏰ 校准超时','校准过程超时，请检查设备连接并重试'); lastCalType = null; }, 35000);
+        calTimeout = setTimeout(() => { closeCal(); showAlert('⏰ 校准超时','校准过程超时，请检查设备连接并重试'); pendingCalType = null; }, 35000);
     }
 
     function closeCal() {
