@@ -1,18 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>泳池LED控制器</title>
-    <link rel="manifest" href="/ZDled-controller/manifest.json">
+    <title>Pool LED Controller</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="泳池控制">
+    <meta name="apple-mobile-web-app-title" content="PoolLED">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a1628">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:Arial,sans-serif;background:#0a1628;color:#e0e0e0;min-height:100vh;padding:10px}
         .container{max-width:500px;margin:0 auto}
         h2{text-align:center;padding:10px 0;color:#4fc3f7;font-size:1.2em}
+        .warn-box{background:#2c1010;color:#ffb8b8;padding:8px;border-radius:8px;margin-bottom:8px;font-size:13px;line-height:1.4}
         .connect-area{text-align:center;padding:10px;background:#0d2137;border-radius:10px;margin-bottom:10px}
         .connect-area button{padding:10px 30px;font-size:16px;border:none;border-radius:20px;cursor:pointer}
         .btn-connect{background:#4fc3f7;color:#000}
@@ -34,63 +37,96 @@
 </head>
 <body>
 <div class="container">
-    <h2>🏊 泳池控制</h2>
+    <h2>🏊 Pool LED Controller</h2>
+
+    <div class="warn-box">
+        ⚠️ Important: Do NOT open inside Facebook/Instagram/WhatsApp built-in browser.<br>
+        iPhone → Use Safari &nbsp;|&nbsp; Android → Use Google Chrome
+    </div>
 
     <div class="connect-area">
-        <button class="btn-connect" onclick="connectBLE()">🔗 连接设备</button>
-        <button class="btn-disconnect" id="btnDisconn" onclick="disconnectBLE()">断开</button>
-        <p id="connStatus" style="margin-top:5px;font-size:12px;color:#888">未连接</p>
+        <button class="btn-connect" onclick="connectBLE()">🔗 Connect Device</button>
+        <button class="btn-disconnect" id="btnDisconn" onclick="disconnectBLE()">Disconnect</button>
+        <p id="connStatus" style="margin-top:5px;font-size:12px;color:#888">Disconnected</p>
     </div>
 
     <div class="status-bar">
-        <div class="status-item"><div class="status-val" id="valTemp">--</div><div class="status-label">气温℃</div></div>
-        <div class="status-item"><div class="status-val" id="valHum">--</div><div class="status-label">湿度%</div></div>
-        <div class="status-item"><div class="status-val" id="valPress">--</div><div class="status-label">气压hPa</div></div>
+        <div class="status-item"><div class="status-val" id="valTemp">--</div><div class="status-label">Temp ℃</div></div>
+        <div class="status-item"><div class="status-val" id="valHum">--</div><div class="status-label">Hum %</div></div>
+        <div class="status-item"><div class="status-val" id="valPress">--</div><div class="status-label">hPa</div></div>
     </div>
-    <div class="mode-display" id="modeDisplay">当前模式: --</div>
-    <div class="section"><h3>🔌 电源</h3><div class="btn-row"><button onclick="sendCmd('开机')">开机</button><button onclick="sendCmd('关机')">关机</button></div></div>
-    <div class="section"><h3>💡 灯光</h3><div class="btn-row"><button onclick="sendCmd('常亮')">常亮</button></div></div>
-    <div class="section"><h3>🔆 亮度</h3><div class="btn-row"><button onclick="sendCmd('亮度25')">25%</button><button onclick="sendCmd('亮度50')">50%</button><button onclick="sendCmd('亮度75')">75%</button><button onclick="sendCmd('亮度100')">100%</button></div></div>
-    <div class="section"><h3>🎨 模式</h3><div class="btn-row"><button onclick="sendCmd('呼吸灯')">呼吸灯</button><button onclick="sendCmd('流水1')">流水1</button><button onclick="sendCmd('流水2')">流水2</button><button onclick="sendCmd('流水3')">流水3</button></div></div>
-    <div class="section"><h3>🔢 顺序</h3><div class="order-area"><input type="text" id="orderInput" placeholder="例: 1,3,2"><button onclick="setOrder()">保存</button></div><div class="btn-row" style="margin-top:6px"><button onclick="sendCmd('恢复默认')">恢复默认</button></div></div>
+    <div class="mode-display" id="modeDisplay">Current Mode: --</div>
+    <div class="section"><h3>🔌 Power</h3><div class="btn-row"><button onclick="sendCmd('开机')">Power On</button><button onclick="sendCmd('关机')">Power Off</button></div></div>
+    <div class="section"><h3>💡 Light</h3><div class="btn-row"><button onclick="sendCmd('常亮')">Solid On</button></div></div>
+    <div class="section"><h3>🔆 Brightness</h3><div class="btn-row"><button onclick="sendCmd('亮度25')">25%</button><button onclick="sendCmd('亮度50')">50%</button><button onclick="sendCmd('亮度75')">75%</button><button onclick="sendCmd('亮度100')">100%</button></div></div>
+    <div class="section"><h3>🎨 Effect Mode</h3><div class="btn-row"><button onclick="sendCmd('呼吸灯')">Breath</button><button onclick="sendCmd('流水1')">Flow 1</button><button onclick="sendCmd('流水2')">Flow 2</button><button onclick="sendCmd('流水3')">Flow 3</button></div></div>
+    <div class="section"><h3>🔢 Sequence</h3><div class="order-area"><input type="text" id="orderInput" placeholder="e.g. 1,3,2"><button onclick="setOrder()">Save</button></div><div class="btn-row" style="margin-top:6px"><button onclick="sendCmd('恢复默认')">Reset Default</button></div></div>
 </div>
 
 <script>
-    // ==================== BLE ====================
-    let bleDevice, bleServer, bleChar, connected = false;
-    const SVC = "12345678-1234-1234-1234-123456789abc";
-    const CHR = "abcd1234-1234-1234-1234-123456789abc";
+// ========== PWA Service Worker Register ==========
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log("ServiceWorker register success", reg))
+    .catch(err => console.warn("ServiceWorker register failed", err));
+  });
+}
 
-    async function connectBLE() {
-        try {
-            document.getElementById('connStatus').innerText = '搜索中...';
-            bleDevice = await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}]});
-            bleServer = await bleDevice.gatt.connect();
-            let svc = await bleServer.getPrimaryService(SVC);
-            bleChar = await svc.getCharacteristic(CHR);
-            await bleChar.startNotifications();
-            bleChar.addEventListener('characteristicvaluechanged', onData);
-            connected = true;
-            document.getElementById('connStatus').innerText = '✅ 已连接';
-            document.getElementById('btnDisconn').style.display = 'inline-block';
-            bleDevice.addEventListener('gattserverdisconnected', () => { connected = false; document.getElementById('connStatus').innerText = '❌ 已断开'; document.getElementById('btnDisconn').style.display = 'none'; });
-        } catch(e) { document.getElementById('connStatus').innerText = '连接失败'; }
-    }
-    function disconnectBLE() { if(bleServer) bleServer.disconnect(); }
-    async function sendCmd(c) { if(!connected||!bleChar) return; try{ await bleChar.writeValueWithResponse(new TextEncoder().encode(c)); } catch(e){ console.log("发送失败",e); } }
-    function setOrder() { let v = document.getElementById('orderInput').value.trim(); if(v) sendCmd('序:' + v); }
+// ==================== BLE 蓝牙通讯 ====================
+let bleDevice, bleServer, bleChar, connected = false;
+const SVC = "12345678-1234-1234-1234-123456789abc";
+const CHR = "abcd1234-1234-1234-1234-123456789abc";
 
-    // ==================== 数据接收 ====================
-    function onData(event) {
-        try {
-            let txt = new TextDecoder().decode(event.target.value);
-            let d = JSON.parse(txt);
-            document.getElementById('valTemp').innerText = d.t ?? '--';
-            document.getElementById('valHum').innerText = d.h ?? '--';
-            document.getElementById('valPress').innerText = d.p ?? '--';
-            document.getElementById('modeDisplay').innerText = '当前模式: ' + (d.mode || '--');
-        } catch(e) {}
+async function connectBLE() {
+    try {
+        document.getElementById('connStatus').innerText = 'Scanning...';
+        bleDevice = await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}]});
+        bleServer = await bleDevice.gatt.connect();
+        let svc = await bleServer.getPrimaryService(SVC);
+        bleChar = await svc.getCharacteristic(CHR);
+        await bleChar.startNotifications();
+        bleChar.addEventListener('characteristicvaluechanged', onData);
+        connected = true;
+        document.getElementById('connStatus').innerText = '✅ Connected';
+        document.getElementById('btnDisconn').style.display = 'inline-block';
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+            connected = false;
+            document.getElementById('connStatus').innerText = '❌ Disconnected';
+            document.getElementById('btnDisconn').style.display = 'none';
+        });
+    } catch(e) {
+        document.getElementById('connStatus').innerText = 'Connect Failed';
+        console.error(e);
     }
+}
+function disconnectBLE() {
+    if(bleServer) bleServer.disconnect();
+}
+async function sendCmd(c) {
+    if(!connected||!bleChar) return;
+    try{
+        await bleChar.writeValueWithResponse(new TextEncoder().encode(c));
+    } catch(e){
+        console.log("Send command error",e);
+    }
+}
+function setOrder() {
+    let v = document.getElementById('orderInput').value.trim();
+    if(v) sendCmd('序:' + v);
+}
+
+// ==================== 数据接收解析 ====================
+function onData(event) {
+    try {
+        let txt = new TextDecoder().decode(event.target.value);
+        let d = JSON.parse(txt);
+        document.getElementById('valTemp').innerText = d.t ?? '--';
+        document.getElementById('valHum').innerText = d.h ?? '--';
+        document.getElementById('valPress').innerText = d.p ?? '--';
+        document.getElementById('modeDisplay').innerText = 'Current Mode: ' + (d.mode || '--');
+    } catch(e) {}
+}
 </script>
 </body>
 </html>
